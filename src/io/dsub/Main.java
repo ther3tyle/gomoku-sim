@@ -1,6 +1,7 @@
 package io.dsub;
 
 import io.dsub.game.Gomoku;
+import io.dsub.game.model.LocalPlayer;
 
 
 /**
@@ -32,7 +33,7 @@ public class Main {
     static Gomoku gomoku;
 
     public static void main(String[] args) {
-        gomoku = new Gomoku();
+        gomoku = new Gomoku(new LocalPlayer(), new LocalPlayer());
         gomoku.initialize();
         gomoku.run();
     }

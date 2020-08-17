@@ -1,40 +1,40 @@
 package io.dsub.game.model;
 
-import io.dsub.util.InputUtil;
 
-public class Player implements Inputtable {
-    private static int userId;
+public abstract class Player implements Inputtable {
 
+    private static int PLAYER_ID = 1;
+
+    private final int id;
     private String name;
-    private String prefix;
-    private int numWin;
-    private String input;
+    private int winCount;
+    private String lastInput;
 
     public Player() {
-        this("");
+        this("PLAYER" + " " + PLAYER_ID);
     }
 
     public Player(String name) {
-        userId++;
         this.name = name;
-        this.numWin = 0;
-        this.input = "";
-        this.name = String.valueOf(userId);
-    }
-
-    @Override
-    public void getKeyboardInput() {
-        System.out.printf("%s > ", this.prefix);
-        this.input = InputUtil.takeInput();
-    }
-
-    public void win() {
-        this.numWin++;
+        this.id = PLAYER_ID;
+        this.winCount = 0;
+        this.lastInput = "";
+        PLAYER_ID++;
     }
 
     /**
-     * Getters and setters
+     * An abstraction of method to update lastInput parameter.
      */
+    @Override
+    public abstract void getKeyboardInput();
+
+    public void addWinCount() {
+        this.winCount++;
+    }
+
+    public int getId() {
+        return id;
+    }
 
     public String getName() {
         return name;
@@ -44,23 +44,19 @@ public class Player implements Inputtable {
         this.name = name;
     }
 
-    public int getNumWin() {
-        return numWin;
+    public int getWinCount() {
+        return winCount;
     }
 
-    public void setNumWin(int numWin) {
-        this.numWin = numWin;
+    public void setWinCount(int winCount) {
+        this.winCount = winCount;
     }
 
-    public String getInput() {
-        return input;
+    public String getLastInput() {
+        return lastInput;
     }
 
-    public String getPrefix() {
-        return prefix;
-    }
-
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
+    public void setLastInput(String lastInput) {
+        this.lastInput = lastInput;
     }
 }

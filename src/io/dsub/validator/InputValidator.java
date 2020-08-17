@@ -9,19 +9,19 @@ public class InputValidator {
     private InputValidator() {
     }
 
-    private static boolean inRange(int num) {
+    private static boolean isValidPositionRange(int num) {
         return num > 0 && num < 16;
     }
 
-    public static boolean isInvalidPosFormat(String input) {
+    public static boolean isInvalidPositionInput(String input) {
         boolean match = Pattern.matches("^[0-9]{1,2}[-_., ][0-9]{1,2}$", input);
         if (!match) return true;
 
         int[] ints = splitToInteger(input, "[-_., ]");
-        if(ints.length < 2) return true;
+        if (ints.length < 2) return true;
 
         for (int value : ints) {
-            if (!inRange(value)) return true;
+            if (!isValidPositionRange(value)) return true;
         }
 
         return false;

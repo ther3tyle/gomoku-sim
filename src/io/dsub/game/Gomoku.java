@@ -7,7 +7,7 @@ import io.dsub.validator.GameValidator;
 import io.dsub.validator.InputValidator;
 
 import static io.dsub.util.InputUtil.splitToInteger;
-import static io.dsub.validator.GameValidator.chkThreeByThree;
+import static io.dsub.validator.GameValidator.isThreeByThree;
 
 public class Gomoku implements Simulatable, Winnable, Playable, Printable {
 
@@ -17,8 +17,8 @@ public class Gomoku implements Simulatable, Winnable, Playable, Printable {
     private final int maxRound;
     private final Board board;
 
-    private Player curPlayer;
-    private Player winner;
+    private Player currentPlayer;
+    private Player currentWinner;
 
     private boolean finished = false;
     private String messageString = "";
@@ -26,9 +26,6 @@ public class Gomoku implements Simulatable, Winnable, Playable, Printable {
     /**
      * Constructors
      */
-    public Gomoku() {
-        this(new Player("PLAYER 1"), new Player("PLAYER 2"));
-    }
 
     public Gomoku(Player player1, Player player2) {
         this(player1, player2, 5);
@@ -37,8 +34,8 @@ public class Gomoku implements Simulatable, Winnable, Playable, Printable {
     public Gomoku(Player player1, Player player2, int maxRound) {
         this.player1 = player1;
         this.player2 = player2;
-        this.curPlayer = player1;
-        this.winner = null;
+        this.currentPlayer = player1;
+        this.currentWinner = null;
         this.maxRound = maxRound;
         this.board = new Board(15);
     }
@@ -47,13 +44,13 @@ public class Gomoku implements Simulatable, Winnable, Playable, Printable {
     public void play(Player player, Position pos) {
         this.board.insert(pos, getTargetChar(player));
 
-        if (chkThreeByThree(this.board, pos, this.getTargetChar(curPlayer))) {
-            Player winner_ = curPlayer == player1 ? player2 : player1;
+        if (isThreeByThree(this.board, pos, this.getTargetChar(currentPlayer))) {
+            Player winner_ = currentPlayer == player1 ? player2 : player1;
             processWinner(winner_);
             return;
         }
 
-        if (GameValidator.findWinner(this.board, pos)) {
+        if (GameValidator.isWinner(this.board, pos)) {
             processWinner(player);
         }
     }
@@ -98,29 +95,30 @@ public class Gomoku implements Simulatable, Winnable, Playable, Printable {
     }
 
     @Override
-    public Player getWinner() {
-        return this.winner;
+    public Player getCurrentWinner() {
+        return this.currentWinner;
     }
 
+    // todo: remove all breaks and continues
     public void run() {
         while (true) {
             PrintUtil.clearLines();
             PrintUtil.printLogo();
             printStatus();
-            curPlayer.getKeyboardInput();
+            PrintUtil.printEnterPositionPrompt(currentPlayer);
+            currentPlayer.getKeyboardInput();
 
             if (isQuit()) break;
 
-            if (InputValidator.isInvalidPosFormat(curPlayer.getInput())) {
+            if (InputValidator.isInvalidPositionInput(currentPlayer.getLastInput())) {
                 this.messageString = "Invalid Input Format. Try Again.";
                 continue;
             }
 
-            int[] posValues = splitToInteger(curPlayer.getInput(), "[-_., ]");
+            int[] posValues = splitToInteger(currentPlayer.getLastInput(), "[-_., ]");
             Position pos = new Position(posValues[0], posValues[1]);
 
-
-            if (GameValidator.isInvalidPosition(pos, this.board.getN())) {
+            if (GameValidator.isInvalidPosition(pos)) {
                 this.messageString = "Invalid Position. Try Again.";
                 continue;
             }
@@ -130,51 +128,67 @@ public class Gomoku implements Simulatable, Winnable, Playable, Printable {
                 continue;
             }
 
-            this.play(curPlayer, pos);
-            curPlayer = curPlayer == player1 ? player2 : player1;
+            this.play(currentPlayer, pos);
+            swapCurrentPlayer();
 
             if (this.finished) {
-                this.reset();
-                if (player1.getNumWin() > this.maxRound || player2.getNumWin() > this.maxRound) {
+                if (isReachedMaxWinCount()) {
                     break;
                 }
+
+                // set loser to open next round
+                if (currentPlayer == currentWinner) {
+                    swapCurrentPlayer();
+                }
+
+                this.reset();
                 this.finished = false;
             }
         }
-        processExit();
+        doExit();
     }
 
     public char getTargetChar(Player player) {
         return player == player1 ? 'X' : 'O';
     }
 
+    private boolean isReachedMaxWinCount() {
+        return player1.getWinCount() > this.maxRound || player2.getWinCount() > this.maxRound;
+    }
+
+    private void swapCurrentPlayer() {
+        currentPlayer = currentPlayer == player1 ? player2 : player1;
+    }
+
+    // todo: be more clear about what it does.
     private void takeUserName(Player player) {
-        player.setPrefix(String.format("ENTER PLAYER %s NAME", player.getName()));
+        PrintUtil.printEnterNamePrompt(player);
         player.getKeyboardInput();
 
-        while (InputValidator.isNotUnique(player.getInput(), "")) {
+        while (InputValidator.isNotUnique(player.getLastInput(), "")) {
             player.getKeyboardInput();
         }
 
-        if (isQuit()) processExit();
-        player.setName(player.getInput());
-        player.setPrefix(String.format("%s", player.getName()));
+        if (isQuit()) {
+            doExit();
+        }
+        player.setName(player.getLastInput());
     }
 
     private void processWinner(Player player) {
-        this.winner = player;
-        this.winner.win();
-        this.messageString = String.format("%s: %d번 이겼다!)\n", this.winner.getName(), this.winner.getNumWin());
+        this.currentWinner = player;
+        this.currentWinner.addWinCount();
+        this.messageString = String.format("%s: %d번 이겼다!\n", this.currentWinner.getName(), this.currentWinner.getWinCount());
         this.isFinished();
     }
 
-    private void processExit() {
+    private void doExit() {
         PrintUtil.clearLines();
         PrintUtil.printLogo();
 
         int p1WinCount, p2WinCount;
-        p1WinCount = player1.getNumWin();
-        p2WinCount = player2.getNumWin();
+        p1WinCount = player1.getWinCount();
+        p2WinCount = player2.getWinCount();
 
         if (p1WinCount != p2WinCount) {
             Player winner_ = p1WinCount > p2WinCount ? player2 : player1;
@@ -190,8 +204,8 @@ public class Gomoku implements Simulatable, Winnable, Playable, Printable {
     }
 
     private boolean isQuit() {
-        return player1.getInput().equals("Q") ||
-                player2.getInput().equals("Q");
+        return player1.getLastInput().equals("Q") ||
+                player2.getLastInput().equals("Q");
     }
 
     /**

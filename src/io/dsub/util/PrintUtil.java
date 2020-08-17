@@ -3,6 +3,8 @@ package io.dsub.util;
 import io.dsub.game.model.Player;
 
 public class PrintUtil {
+
+
     private static int width;
 
     private PrintUtil() {
@@ -11,16 +13,16 @@ public class PrintUtil {
 
     public static void printUsers(String player1, String player2) {
         String usersStr = String.format("%s VS %s\n", player1, player2);
-        printMiddle(usersStr);
+        printAtMiddle(usersStr);
     }
 
     public static void printUsersWithVersus(Player player1, Player player2) {
         String usersVs = String.format("%s %d - %d %s",
                 player1.getName(),
-                player1.getNumWin(),
-                player2.getNumWin(),
+                player1.getWinCount(),
+                player2.getWinCount(),
                 player2.getName());
-        printMiddle(usersVs);
+        printAtMiddle(usersVs);
     }
 
     public static void printHR() {
@@ -31,7 +33,7 @@ public class PrintUtil {
         System.out.println("=".repeat(width));
     }
 
-    private static int getPrintMargin(String s) {
+    private static int getPrintLeftMarginString(String s) {
         int margin = (width - s.length()) / 2;
         if (margin < 0) margin = 0;
         return margin;
@@ -41,9 +43,9 @@ public class PrintUtil {
         String winStr = "~ " + winnerName + " ~";
         String deco = "*+* WINNER *+*";
 
-        printMiddle(deco);
+        printAtMiddle(deco);
         System.out.println();
-        printMiddle(winStr);
+        printAtMiddle(winStr);
     }
 
     public static void printLogo() {
@@ -55,8 +57,16 @@ public class PrintUtil {
         System.out.println("\n".repeat(49));
     }
 
-    public static void printMiddle(String s) {
-        int margin = getPrintMargin(s);
+    public static void printEnterNamePrompt(Player player) {
+        System.out.printf("ENTER PLAYER %s NAME > ", player.getName());
+    }
+
+    public static void printEnterPositionPrompt(Player player) {
+        System.out.printf("%s > ", player.getName());
+    }
+
+    public static void printAtMiddle(String s) {
+        int margin = getPrintLeftMarginString(s);
         System.out.println(" ".repeat(margin) + s);
     }
 
